@@ -1,0 +1,58 @@
+# Step 1: Import libraries
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+
+# Step 2: Load the dataset
+df = pd.read_csv("Titanic-Dataset.csv")
+print("Initial Data Overview:")
+display(df.head())
+
+# Step 3: Check for null values and data types
+print("\nData Info:")
+df.info()
+
+print("\nMissing Values:")
+print(df.isnull().sum())
+
+# Step 4: Handle missing values
+# Fill Age with median, Cabin with 'Unknown', Embarked with mode
+df['Age'].fillna(df['Age'].median(), inplace=True)
+df['Cabin'].fillna('Unknown', inplace=True)
+df['Embarked'].fillna(df['Embarked'].mode()[0], inplace=True)
+
+# Drop Ticket column (not useful for ML models), you can drop Name too
+df.drop(['Ticket', 'Name'], axis=1, inplace=True)
+
+# Step 5: Encode categorical variables
+# Encode 'Sex' and 'Embarked'
+le = LabelEncoder()
+df['Sex'] = le.fit_transform(df['Sex'])
+df['Embarked'] = le.fit_transform(df['Embarked'])
+df['Cabin'] = le.fit_transform(df['Cabin'])  # Optional, or you can drop it
+
+# Step 6: Standardize/Normalize numerical features
+scaler = StandardScaler()
+numeric_cols = ['Age', 'Fare']
+df[numeric_cols] = scaler.fit_transform(df[numeric_cols])
+
+# Step 7: Detect and visualize outliers
+plt.figure(figsize=(10, 5))
+sns.boxplot(data=df[numeric_cols])
+plt.title("Boxplot to detect outliers in Age and Fare")
+plt.show()
+
+# Optional: Remove outliers based on IQR
+Q1 = df[numeric_cols].quantile(0.25)
+Q3 = df[numeric_cols].quantile(0.75)
+IQR = Q3 - Q1
+df = df[~((df[numeric_cols] < (Q1 - 1.5 * IQR)) | (df[numeric_cols] > (Q3 + 1.5 * IQR))).any(axis=1)]
+
+# Step 8: Final dataset overview
+print("\nCleaned Dataset Overview:")
+display(df.head())
+print("\nCleaned Data Info:")
+df.info()
+
